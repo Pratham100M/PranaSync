@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en" data-circadian-theme="canopy">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PranaSync — Botanical Yoga, Meditation &amp; Circadian Wellness Sanctuary</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- MediaPipe Pose via CDN (Graceful offline/sandbox fallback included) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+  <!-- Google Fonts: Inter, Plus Jakarta Sans & Cormorant Garamond -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="/static/js/tailwind-config.js"></script>
+
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-forest-200 selection:text-forest-950">
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" role="status" aria-live="polite" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-4 opacity-0">
+    <div class="bg-forest-950 text-cream-50 px-5 py-3.5 rounded-2xl shadow-2xl border border-forest-400/40 flex items-center gap-3 text-sm font-medium">
+      <span id="toastIcon" class="text-marigold-400 text-lg">✓</span>
+      <span id="toastMessage">Saved locally to your device</span>
+    </div>
+  </div>
+
+  <!-- Optional Account Login & Progress Vault Modal -->
+  <div id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-forest-950/65 backdrop-blur-md">
+    <div class="glass-card w-full max-w-md overflow-hidden shadow-2xl border border-forest-300/60 relative animate-[fadeIn_0.2s_ease-out]">
+      <!-- Modal Botanical Banner -->
+      <div class="glass-emerald-dark text-white p-5 sm:p-6 relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-36 h-36 rounded-full bg-marigold-400/20 blur-2xl pointer-events-none"></div>
+        <div class="flex items-start justify-between gap-3 relative z-10">
+          <div class="flex items-center gap-3">
+            <div id="modalAvatarBadge" class="w-11 h-11 rounded-2xl bg-forest-400/25 border border-forest-300/40 text-white flex items-center justify-center text-lg font-display font-extrabold">
+              🔐
+            </div>
+            <div>
+              <span id="modalSubtitlePill" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-marigold-400/20 text-marigold-300 border border-marigold-400/35">
+                Optional Progress Vault
+              </span>
+              <h2 id="accountModalTitle" class="font-display font-extrabold text-lg sm:text-xl text-white mt-1">
+                Save &amp; Protect Your Progress
+              </h2>
+            </div>
+          </div>
+          <button onclick="closeAccountModal()" aria-label="Close account modal" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-base font-bold transition-all">
+            ×
+          </button>
+        </div>
+      </div>
+
+      <!-- LOGGED-OUT VIEW: Optional Sign In / Create Account -->
+      <div id="authGuestContainer" class="p-5 sm:p-6 space-y-4">
+        <div class="p-3 rounded-2xl bg-forest-50 border border-forest-200 text-xs text-forest-900 leading-relaxed">
+          <strong>100% Optional:</strong> You can explore all yoga, meditation, and wellness tools as a Guest. Create a local password-protected vault to isolate and safeguard your XP, streaks, journal, and screeners.
+        </div>
+
+        <!-- Mode Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-1.5 bg-cream-100 p-1 rounded-2xl border border-forest-200">
+          <button type="button" id="authTabLogin" onclick="switchAuthFormMode('login')" class="py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-forest-600 to-jade-600 text-white shadow-sm transition-all">
+            Sign In
+          </button>
+          <button type="button" id="authTabSignup" onclick="switchAuthFormMode('signup')" class="py-2 rounded-xl text-xs font-bold text-forest-900 transition-all">
+            Create Account
+          </button>
+        </div>
+
+        <!-- Inline Error / Info Alert -->
+        <div id="authFormError" class="hidden p-3 rounded-xl bg-terracotta-50 border border-terracotta-400/50 text-xs font-semibold text-terracotta-600"></div>
+
+        <!-- Sign In Form -->
+        <form id="loginForm" onsubmit="handleAccountLogin(event)" class="space-y-3">
+          <div>
+            <label for="loginIdentifier" class="block text-xs font-bold text-forest-950 mb-1">Username or Email</label>
+            <input id="loginIdentifier" type="text" required autocomplete="username" placeholder="e.g., arya_yogi or arya@example.com" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2.5 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+          </div>
+          <div>
+            <label for="loginPassword" class="block text-xs font-bold text-forest-950 mb-1">Password</label>
+            <input id="loginPassword" type="password" required autocomplete="current-password" placeholder="Enter your vault password" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2.5 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+          </div>
+          <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white font-bold text-sm shadow-md transition-all">
+            🔓 Sign In &amp; Load My Progress
+          </button>
+        </form>
+
+        <!-- Create Account Form -->
+        <form id="signupForm" onsubmit="handleAccountSignup(event)" class="hidden space-y-3">
+          <div>
+            <label for="signupDisplayName" class="block text-xs font-bold text-forest-950 mb-1">Your Name</label>
+            <input id="signupDisplayName" type="text" required placeholder="e.g., Arya Pratham" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+          </div>
+          <div>
+            <label for="signupIdentifier" class="block text-xs font-bold text-forest-950 mb-1">Username or Email</label>
+            <input id="signupIdentifier" type="text" required autocomplete="username" placeholder="Choose a unique username or email" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label for="signupPassword" class="block text-xs font-bold text-forest-950 mb-1">Password (min 6 chars)</label>
+              <input id="signupPassword" type="password" minlength="6" required autocomplete="new-password" placeholder="••••••" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+            </div>
+            <div>
+              <label for="signupConfirmPassword" class="block text-xs font-bold text-forest-950 mb-1">Confirm Password</label>
+              <input id="signupConfirmPassword" type="password" minlength="6" required autocomplete="new-password" placeholder="••••••" class="w-full rounded-xl bg-cream-50 border border-forest-200 px-3.5 py-2 text-sm text-forest-950 focus:outline-none focus:border-forest-600" />
+            </div>
+          </div>
+          <label class="flex items-start gap-2 pt-1 cursor-pointer select-none">
+            <input id="migrateGuestCheckbox" type="checkbox" checked class="mt-0.5 rounded accent-forest-600" />
+            <span class="text-xs text-jade-800 leading-snug">
+              Save my current Guest session progress (XP, streaks, journal &amp; badges) into this account
+            </span>
+          </label>
+          <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-r from-forest-600 via-jade-600 to-forest-700 hover:brightness-105 text-white font-bold text-sm shadow-md transition-all">
+            🌿 Create Protected Progress Vault
+          </button>
+        </form>
+
+        <div class="pt-2 border-t border-forest-200/70 flex items-center justify-between gap-2">
+          <button type="button" onclick="closeAccountModal()" class="text-xs font-semibold text-jade-700 hover:text-forest-950 transition-all">
+            Continue as Guest →
+          </button>
+          <span class="text-[11px] text-jade-700">SHA-256 Salted Local Vault</span>
+        </div>
+      </div>
+
+      <!-- LOGGED-IN VIEW: Signed-In Profile, Vault Stats, Backup/Restore & Lock -->
+      <div id="authProfileContainer" class="hidden p-5 sm:p-6 space-y-4">
+        <div class="p-4 rounded-2xl bg-forest-50 border border-forest-200 flex items-center justify-between gap-3">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-forest-700">Signed-In Sanctuary Member</p>
+            <h3 id="profileDisplayName" class="font-display font-extrabold text-lg text-forest-950">Arya Pratham</h3>
+            <p id="profileIdentifierText" class="text-xs text-jade-800">arya_yogi • Protected Local Vault</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-forest-600 text-white shrink-0">
+            ✓ Auto-Saving
+          </span>
+        </div>
+
+        <!-- Saved Vault Snapshot -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="p-3 rounded-2xl bg-cream-50 border border-forest-200/80">
+            <p class="text-[11px] font-semibold text-jade-700">Saved XP &amp; Level</p>
+            <p id="vaultStatXp" class="font-display font-bold text-base text-forest-950 mt-0.5">60 XP • Lvl 1</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-cream-50 border border-forest-200/80">
+            <p class="text-[11px] font-semibold text-jade-700">Active Streak</p>
+            <p id="vaultStatStreak" class="font-display font-bold text-base text-terracotta-600 mt-0.5">1 Day 🔥</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-cream-50 border border-forest-200/80">
+            <p class="text-[11px] font-semibold text-jade-700">Journal Entries</p>
+            <p id="vaultStatJournals" class="font-display font-bold text-base text-forest-950 mt-0.5">0 entries</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-cream-50 border border-forest-200/80">
+            <p class="text-[11px] font-semibold text-jade-700">Badges Unlocked</p>
+            <p id="vaultStatBadges" class="font-display font-bold text-base text-forest-700 mt-0.5">1 / 8 seals</p>
+          </div>
+        </div>
+
+        <!-- Merge Guest Progress into Account (if guest data exists) -->
+        <div id="guestMergeBox" class="hidden p-3.5 rounded-2xl bg-marigold-100/70 border border-marigold-400/50 flex items-center justify-between gap-3">
+          <p class="text-xs text-amber-950 leading-snug">
+            <strong>Unsaved Guest activity detected!</strong> Merge your Guest XP &amp; entries into this account?
+          </p>
+          <button type="button" onclick="mergeGuestDataIntoActiveAccount()" class="px-3 py-1.5 rounded-xl bg-marigold-500 hover:bg-marigold-600 text-white text-xs font-bold shrink-0">
+            Merge Now
+          </button>
+        </div>
+
+        <!-- Portable Backup Download & Restore -->
+        <div class="p-3.5 rounded-2xl bg-cream-100/90 border border-forest-200/80 space-y-2.5">
+          <p class="text-xs font-bold text-forest-950">🛡️ Portable Progress Backup (Extra Safety)</p>
+          <p class="text-[11px] text-jade-800 leading-relaxed">
+            Download a portable backup file of your account so you can restore your progress on any browser or device.
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="exportUserVaultBackup()" class="py-2 px-3 rounded-xl bg-white hover:bg-forest-50 text-forest-900 border border-forest-300 text-xs font-bold transition-all">
+              ⬇ Download Backup
+            </button>
+            <label class="py-2 px-3 rounded-xl bg-white hover:bg-forest-50 text-forest-900 border border-forest-300 text-xs font-bold text-center cursor-pointer transition-all">
+              ⬆ Restore Backup
+              <input type="file" accept=".json,application/json" onchange="importUserVaultBackup(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-forest-200/70 flex items-center justify-between gap-3">
+          <button type="button" onclick="handleAccountLogout()" class="px-4 py-2.5 rounded-xl bg-terracotta-50 hover:bg-terracotta-100 text-terracotta-600 border border-terracotta-400/40 text-xs font-bold transition-all">
+            🔒 Sign Out &amp; Lock Vault
+          </button>
+          <button type="button" onclick="closeAccountModal()" class="px-4 py-2.5 rounded-xl bg-forest-600 hover:bg-forest-700 text-white text-xs font-bold transition-all">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Botanical Header with Adaptive Circadian Theme Switcher, Gamification HUD & Module Navigation -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl border-b transition-colors duration-300" style="background: var(--header-bg); border-color: var(--header-border);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3">
+      <!-- Row 1: Brand + Adaptive Circadian Switcher + Gamification HUD -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <!-- Brand Mark -->
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-forest-500 via-jade-600 to-forest-800 flex items-center justify-center text-white shadow-lg shadow-forest-700/25 relative">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c-2.5 3.5-6 6.2-6 10.2A6 6 0 0018 13.2C18 9.2 14.5 6.5 12 3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v10M9 13l3-2 3 2" />
+            </svg>
+            <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-marigold-400 border-2 border-white"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-display font-extrabold text-xl tracking-tight text-forest-950">PranaSync</span>
+              <span id="circadianActiveBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-forest-100 text-forest-800 border border-forest-300/60">
+                🌿 Midday Canopy
+              </span>
+            </div>
+            <p class="text-xs text-jade-700">Adaptive Circadian Yoga, Meditation &amp; Mindful Wellness</p>
+          </div>
+        </div>
+
+        <!-- Right Cluster: Adaptive Circadian Theme Switcher + Gamification HUD -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Adaptive Circadian Theme Pill Switcher -->
+          <div class="flex items-center gap-1 bg-cream-100/90 p-1 rounded-2xl border border-forest-200/80 shadow-sm" role="group" aria-label="Adaptive Circadian Theme">
+            <button onclick="setCircadianPreference('auto')" id="theme-btn-auto" class="circadian-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all" title="Automatically adapts to your local time of day">
+              ✨ Auto
+            </button>
+            <button onclick="setCircadianPreference('morning')" id="theme-btn-morning" class="circadian-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all" title="Morning Dew & Marigold (5 AM – 12 PM)">
+              ☀️ Morning
+            </button>
+            <button onclick="setCircadianPreference('canopy')" id="theme-btn-canopy" class="circadian-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all" title="Midday Canopy & Jade (12 PM – 6 PM)">
+              🌿 Canopy
+            </button>
+            <button onclick="setCircadianPreference('twilight')" id="theme-btn-twilight" class="circadian-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all" title="Twilight Canopy & Indigo Lotus (6 PM – 5 AM)">
+              🌙 Twilight
+            </button>
+          </div>
+
+          <!-- Gamification HUD (Streak, XP, Rank, Daily Goal Progress) -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 bg-cream-50/90 px-3.5 py-1.5 rounded-2xl border border-forest-200/80 shadow-sm">
+            <!-- Daily Streak Flame -->
+            <div class="flex items-center gap-1.5 pr-2.5 border-r border-forest-200/80" title="Daily Practice Streak">
+              <span class="text-base">🔥</span>
+              <div>
+                <p class="text-[9px] font-bold uppercase tracking-wider text-jade-600 leading-none">Streak</p>
+                <p class="text-xs font-display font-bold text-terracotta-600"><span id="hudStreakDays">1</span> Day</p>
+              </div>
+            </div>
+
+            <!-- Total XP & Level Badge -->
+            <div class="flex items-center gap-2 pr-2.5 border-r border-forest-200/80">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-marigold-100 to-terracotta-100 text-marigold-600 flex items-center justify-center font-bold text-xs border border-marigold-400/30">
+                ★
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span id="hudRankTitle" class="text-xs font-bold text-forest-950">Novice Yogi</span>
+                  <span class="px-1.5 py-0.2 rounded bg-forest-100 text-forest-800 font-mono text-[10px] font-bold">Lvl <span id="hudLevelNum">1</span></span>
+                </div>
+                <p class="text-[11px] font-semibold text-forest-700"><span id="hudTotalXp">0</span> XP</p>
+              </div>
+            </div>
+
+            <!-- Today's Daily Quest Progress Bar -->
+            <div class="min-w-[105px] sm:min-w-[130px]">
+              <div class="flex justify-between text-[10px] font-bold text-jade-700 mb-1">
+                <span>Daily Quest</span>
+                <span id="hudDailyXpLabel" class="text-forest-700">0 / 100 XP</span>
+              </div>
+              <div class="w-full h-1.5 bg-cream-200 rounded-full overflow-hidden">
+                <div id="hudDailyXpBar" class="h-full bg-gradient-to-r from-forest-500 via-marigold-400 to-terracotta-400 transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optional Account & Progress Vault Button -->
+          <button onclick="openAccountModal()" id="headerAccountBtn" class="flex items-center gap-2 bg-cream-50/95 hover:bg-forest-50 px-3 py-1.5 rounded-2xl border border-forest-300/80 shadow-sm transition-all text-left" title="Optional Sign In to save and protect your progress">
+            <div id="headerAvatarCircle" class="w-7 h-7 rounded-xl bg-gradient-to-br from-forest-500 to-jade-700 text-white flex items-center justify-center text-xs font-extrabold shadow-sm">
+              👤
+            </div>
+            <div>
+              <p id="headerAccountStatusTag" class="text-[9px] font-bold uppercase tracking-wider text-jade-700 leading-none">Guest Mode</p>
+              <p id="headerAccountNameLabel" class="text-xs font-display font-bold text-forest-950">Save Progress</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: Primary Navigation Tabs -->
+      <nav class="flex items-center gap-1.5 bg-cream-100/90 p-1.5 rounded-2xl border border-forest-200/80 overflow-x-auto max-w-full" aria-label="Primary Modules">
+        <button onclick="switchTab('studio')" id="tab-studio" class="tab-btn active px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>📹</span> Pose Studio
+        </button>
+        <button onclick="switchTab('meditate')" id="tab-meditate" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-jade-800 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>🪷</span> Meditate &amp; Focus
+        </button>
+        <button onclick="switchTab('goals')" id="tab-goals" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-jade-800 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>🎯</span> Goals &amp; Plans
+        </button>
+        <button onclick="switchTab('challenges')" id="tab-challenges" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-jade-800 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>🏆</span> Challenges &amp; Badges
+          <span id="navBadgeCountPill" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-marigold-400/25 text-amber-900">1/8</span>
+        </button>
+        <button onclick="switchTab('wellness')" id="tab-wellness" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-jade-800 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>📓</span> Journal &amp; Mind
+        </button>
+        <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-jade-800 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>📈</span> Insights
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- =====================================================================
+         MODULE 1: LIVE WEBCAM MEDIAPIPE POSE & 8-ASANA STUDIO
+         ===================================================================== -->
+    <section id="view-studio" class="space-y-5">
+      <!-- Guided Sequenced Yoga Plan Runner HUD (Visible when a Daily Yoga Plan is active) -->
+      <div id="guidedPlanRunnerHud" class="hidden rounded-3xl glass-emerald-dark text-white p-5 sm:p-6 border-2 border-marigold-400/60 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-marigold-400/15 blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="planPhaseBadge" class="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-forest-400 text-forest-950">
+                🧘 Active Pose Hold
+              </span>
+              <span id="planProgressCounter" class="text-xs font-bold text-forest-200">
+                Pose 1 of 4 • Calmer Mind Flow
+              </span>
+            </div>
+            <h2 id="planCurrentStepHeadline" class="font-display font-extrabold text-xl sm:text-2xl text-white">
+              Tadasana (ताडासन) — Hold for 45s
+            </h2>
+            <p id="planNextUpHint" class="text-xs text-forest-200/90">
+              Next up: 15s Rest → Vrikshasana (Tree Pose)
+            </p>
+          </div>
+
+          <!-- Live Countdown + Runner Controls -->
+          <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div class="bg-forest-950/85 border border-forest-300/35 rounded-2xl px-4 py-2.5 text-center min-w-[115px]">
+              <p id="planTimerSubLabel" class="text-[10px] font-bold uppercase tracking-wider text-marigold-400">Hold Remaining</p>
+              <p id="planStepCountdownText" class="font-mono font-extrabold text-2xl sm:text-3xl text-white">00:45</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="btnPlanPauseResume" onclick="toggleGuidedPlanPause()" class="px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-xs font-bold text-white transition-all">
+                Ⅱ Pause
+              </button>
+              <button onclick="skipGuidedPlanStep()" class="px-3.5 py-2.5 rounded-xl bg-marigold-400/20 hover:bg-marigold-400/30 border border-marigold-400/40 text-xs font-bold text-marigold-300 transition-all">
+                Skip Step ⏭
+              </button>
+              <button onclick="stopGuidedPlan(false)" class="px-3.5 py-2.5 rounded-xl bg-terracotta-600/80 hover:bg-terracotta-500 text-xs font-bold text-white transition-all">
+                ✕ Exit Plan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linear Step Progress Bar -->
+        <div class="mt-4 w-full h-2 bg-white/15 rounded-full overflow-hidden">
+          <div id="planStepProgressBar" class="h-full bg-gradient-to-r from-forest-400 via-marigold-400 to-terracotta-400 transition-all duration-300" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <!-- Top Camera Controls & 8-Asana Target Lock Bar -->
+      <div class="glass-card p-4 sm:p-5 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <!-- Camera Controls -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnStartStopCam" onclick="togglePrimaryCamera()" class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white shadow-md shadow-forest-600/20 transition-all flex items-center gap-2">
+              <span id="camBtnIcon">📹</span>
+              <span id="camBtnLabel">Start Live Camera</span>
+            </button>
+
+            <button id="btnFlipCamera" onclick="flipCameraFacing()" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:bg-forest-50 transition-all flex items-center gap-1.5" title="Switch Front / Rear Camera">
+              <span>🔄</span> <span id="facingLabel">Front Cam</span>
+            </button>
+
+            <button id="btnMirrorToggle" onclick="toggleMirrorVideo()" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-forest-50 border border-forest-200 text-forest-800 hover:bg-forest-100 transition-all flex items-center gap-1.5">
+              <span>🪞</span> Mirror: <span id="mirrorStateLabel" class="font-bold">ON</span>
+            </button>
+
+            <button id="btnFallbackSim" onclick="toggleFallbackDemo()" class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-terracotta-50 border border-terracotta-400/40 text-terracotta-600 hover:bg-terracotta-100 transition-all">
+              <span id="fallbackModeLabel">Preview Demo Pose</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="launchGuidedYogaPlan()" class="text-xs font-bold text-white bg-gradient-to-r from-terracotta-500 to-marigold-500 hover:brightness-105 px-3.5 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+              <span>▶</span> Launch My Daily Yoga Plan
+            </button>
+            <button onclick="switchTab('meditate')" class="text-xs font-bold text-jade-700 hover:text-forest-900 bg-forest-50 px-3 py-2 rounded-xl border border-forest-200/80 transition-all flex items-center gap-1.5">
+              <span>🪷</span> Meditate
+            </button>
+          </div>
+        </div>
+
+        <!-- 8-Asana Selector Pills (Sanskrit + English) -->
+        <div class="pt-2.5 border-t border-forest-200/60 flex flex-wrap items-center gap-1.5" id="asanaLockPills">
+          <span class="text-xs font-bold text-jade-800 mr-1">Select Asana:</span>
+          <button onclick="setTargetAsanaLock('AUTO')" id="lock-AUTO" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-forest-600 to-jade-600 text-white shadow-sm transition-all">
+            ✨ Auto-Detect
+          </button>
+          <button onclick="setTargetAsanaLock('Tadasana')" id="lock-Tadasana" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Tadasana (ताडासन)
+          </button>
+          <button onclick="setTargetAsanaLock('Vrikshasana')" id="lock-Vrikshasana" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Vrikshasana (वृक्षासन)
+          </button>
+          <button onclick="setTargetAsanaLock('WarriorII')" id="lock-WarriorII" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Virabhadrasana II (वीरभद्रासन)
+          </button>
+          <button onclick="setTargetAsanaLock('Triangle')" id="lock-Triangle" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Trikonasana (त्रिकोणासन)
+          </button>
+          <button onclick="setTargetAsanaLock('DownwardDog')" id="lock-DownwardDog" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Adho Mukha Svanasana (अधोमुखश्वानासन)
+          </button>
+          <button onclick="setTargetAsanaLock('Utkatasana')" id="lock-Utkatasana" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Utkatasana (उत्कटासन)
+          </button>
+          <button onclick="setTargetAsanaLock('Bhujangasana')" id="lock-Bhujangasana" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Bhujangasana (भुजंगासन)
+          </button>
+          <button onclick="setTargetAsanaLock('Anjaneyasana')" id="lock-Anjaneyasana" class="asana-lock-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-forest-200 text-forest-900 hover:border-forest-500 transition-all">
+            Anjaneyasana (अञ्जनेयासन)
+          </button>
+        </div>
+      </div>
+
+      <!-- High-Visibility Priority Corrective Coaching Banner -->
+      <div class="rounded-3xl glass-emerald-dark text-white p-4 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div id="cueStatusPulse" class="w-11 h-11 rounded-2xl bg-forest-400/20 border border-forest-300/40 text-forest-300 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-forest-300">Live Posture Correction Cue</span>
+              <span id="cameraLiveStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-forest-100 border border-white/10">
+                Ready — Click Start Live Camera
+              </span>
+            </div>
+            <p id="activeCueText" class="text-base sm:text-lg font-display font-bold text-white mt-0.5">
+              Start your live camera and step back so your full body is visible
+            </p>
+            <div class="flex items-center gap-2.5 mt-1.5">
+              <div class="w-40 sm:w-56 h-1.5 bg-white/15 rounded-full overflow-hidden">
+                <div id="cueCooldownBar" class="h-full bg-gradient-to-r from-forest-400 to-marigold-400 transition-all duration-100" style="width: 100%"></div>
+              </div>
+              <span class="text-[11px] text-forest-200/75">3.5s voice cadence</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnVoiceToggle" onclick="toggleVoiceCoach()" class="px-4 py-2.5 rounded-2xl text-xs font-bold bg-white/12 hover:bg-white/20 border border-forest-300/30 text-white transition-all shrink-0 self-end sm:self-center flex items-center gap-1.5">
+          <span>🔊</span> Voice Coach: <span id="voiceStateText" class="text-forest-300">Ready</span>
+        </button>
+      </div>
+
+      <!-- Main 12-Column Split: Left Live Camera Canvas (7 cols) + Right Score & Asana Wisdom (5 cols) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Column: Live Webcam + 33-Landmark Skeleton Canvas + Asana Guide -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="glass-card p-4 sm:p-5">
+            <!-- Canvas Telemetry Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-lg bg-forest-950 text-forest-300 font-mono text-xs font-bold">
+                  <span id="fpsCounter">0</span> FPS
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-forest-50 text-forest-800 border border-forest-200 text-xs font-semibold">
+                  33-Point Full-Body Tracking
+                </span>
+              </div>
+              <span class="text-xs text-jade-700 font-medium">Follow the guide and move at your own pace</span>
+            </div>
+
+            <!-- Live Video + Skeleton Overlay Viewport -->
+            <div id="canvasContainer" class="relative w-full aspect-[4/3] sm:aspect-video rounded-2xl overflow-hidden border-2 border-forest-200/80 shadow-inner">
+              <video id="webcamVideo" playsinline muted autoplay aria-label="Live camera preview"></video>
+              <canvas id="poseCanvas" class="w-full h-full block"></canvas>
+
+              <!-- Top-Left Overlay: Sanskrit + English Asana Name & Confidence -->
+              <div class="absolute top-3 left-3 bg-forest-950/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl border border-forest-400/25 pointer-events-none max-w-[68%]">
+                <p id="classifierModeTag" class="text-[10px] uppercase tracking-wider text-forest-300 font-bold">Auto-Detected Asana</p>
+                <div class="flex flex-wrap items-baseline gap-2">
+                  <h2 id="detectedAsanaName" class="text-sm sm:text-base font-bold leading-tight">Tadasana (ताडासन)</h2>
+                  <span id="classifierConfidence" class="text-xs font-mono text-forest-300">--</span>
+                </div>
+                <p id="detectedAsanaSubtitle" class="text-[11px] text-forest-100/80">Mountain Pose</p>
+              </div>
+
+              <!-- Top-Right Overlay: Continuous Hold Timer -->
+              <div class="absolute top-3 right-3 bg-forest-950/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl border border-forest-400/25 text-right pointer-events-none">
+                <p class="text-[10px] uppercase tracking-wider text-marigold-400 font-bold">Aligned Hold (≥75)</p>
+                <p id="holdTimerDisplay" class="text-base sm:text-lg font-mono font-bold text-white">00:00.0</p>
+              </div>
+
+              <!-- Start Camera Launch Overlay -->
+              <div id="cameraStartOverlay" class="absolute inset-0 bg-gradient-to-br from-forest-950/92 via-jade-800/90 to-forest-900/92 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center text-white z-10">
+                <div class="w-16 h-16 rounded-3xl bg-forest-400/20 border border-forest-300/40 flex items-center justify-center text-3xl mb-4 shadow-lg">
+                  📹
+                </div>
+                <h3 id="overlayHeadline" class="font-display font-bold text-xl sm:text-2xl text-white">Live Camera Posture Coach</h3>
+                <p id="cameraStatusMsg" class="text-xs sm:text-sm text-forest-100/85 max-w-md mt-2 mb-5 leading-relaxed">
+                  Turn on your webcam to detect your yoga pose in real time, see live angle measurements, and receive synced voice guidance.
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                  <button id="btnOverlayStartCam" onclick="startLiveWebcam()" class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-forest-500 to-forest-600 hover:from-forest-400 hover:to-forest-500 text-white text-sm font-bold shadow-lg shadow-forest-950/50 transition-all flex items-center gap-2">
+                    <span>▶</span> Start Live Camera Now
+                  </button>
+                  <button onclick="enableFallbackDemo()" class="px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-forest-100 text-xs font-semibold border border-white/20 transition-all">
+                    Preview Demo Pose
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <details class="mt-4 border-t border-forest-200/60 pt-3">
+              <summary class="cursor-pointer text-xs font-semibold text-jade-700 select-none">Advanced tracking settings</summary>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1.5">
+                    <span class="text-forest-900">Skeleton smoothing</span>
+                    <span id="emaValueLabel" class="text-forest-700 font-mono">0.35 (Balanced)</span>
+                  </div>
+                  <input id="emaSlider" type="range" min="0.1" max="1.0" step="0.05" value="0.35" oninput="updateEmaAlpha(this.value)" class="w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1.5">
+                    <span class="text-forest-900">Posture tolerance (± deg)</span>
+                    <span id="toleranceValueLabel" class="text-forest-700 font-mono">±12°</span>
+                  </div>
+                  <input id="toleranceSlider" type="range" min="5" max="25" step="1" value="12" oninput="updateTolerance(this.value)" class="w-full" />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Guided Pose Walkthrough: Grounded Keyframe Progression & Voice-Synced Playback -->
+          <section class="glass-card p-5 sm:p-6 border-t-4 border-t-forest-500" aria-labelledby="tutorialHeading">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-forest-700">Grounded Movement Guide</span>
+                  <span id="voiceSyncStatusPill" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-terracotta-100 text-terracotta-600 animate-pulse">
+                    🔊 Voice Speaking — Waiting to Advance
+                  </span>
+                </div>
+                <h3 id="tutorialHeading" class="font-display font-bold text-lg text-forest-950 mt-1">Pose Walkthrough</h3>
+                <p class="text-xs text-jade-700 mt-0.5">Step-by-step grounded transitions synchronized with the voice coach.</p>
+              </div>
+              <span id="tutorialStepCount" class="px-3 py-1.5 rounded-xl bg-forest-50 border border-forest-200 text-forest-800 text-xs font-bold">Step 1 of 4</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+              <div class="md:col-span-2 tutorial-stage rounded-2xl overflow-hidden h-64 sm:h-72 relative">
+                <canvas id="tutorialFigure" width="420" height="420" aria-label="Animated yoga pose demonstration"></canvas>
+                <div class="absolute bottom-2.5 left-3 right-3 text-center text-[10px] text-jade-800/80 font-semibold">
+                  Grounded mat alignment • Move gently
+                </div>
+              </div>
+
+              <div class="md:col-span-3">
+                <div class="flex items-center gap-2 mb-2.5" id="tutorialDots">
+                  <span class="step-dot active w-7 h-7 rounded-full border flex items-center justify-center text-[11px] font-bold">1</span>
+                  <span class="step-dot w-7 h-7 rounded-full border border-forest-200 bg-white flex items-center justify-center text-[11px] font-bold">2</span>
+                  <span class="step-dot w-7 h-7 rounded-full border border-forest-200 bg-white flex items-center justify-center text-[11px] font-bold">3</span>
+                  <span class="step-dot w-7 h-7 rounded-full border border-forest-200 bg-white flex items-center justify-center text-[11px] font-bold">4</span>
+                </div>
+                <p id="tutorialStepTitle" class="font-display font-bold text-base text-forest-950">Start in Mountain Pose</p>
+                <p id="tutorialStepText" class="text-sm leading-relaxed text-jade-800 mt-1 min-h-[3.75rem]">Stand comfortably with feet grounded, arms relaxed and gaze forward.</p>
+
+                <div class="flex flex-wrap gap-2 mt-4">
+                  <button onclick="tutorialPrevious()" id="tutorialPrev" class="px-3.5 py-2 rounded-xl border border-forest-200 bg-white hover:bg-forest-50 text-forest-900 text-xs font-semibold disabled:opacity-40 transition-all" disabled>← Previous</button>
+                  <button onclick="tutorialPlayPause()" id="tutorialPlay" class="px-4 py-2 rounded-xl bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white text-xs font-bold shadow-sm transition-all">▶ Play steps</button>
+                  <button onclick="tutorialNext()" id="tutorialNext" class="px-3.5 py-2 rounded-xl border border-forest-200 bg-white hover:bg-forest-50 text-forest-900 text-xs font-semibold transition-all">Next →</button>
+                  <button onclick="speakTutorialStep()" class="px-3.5 py-2 rounded-xl bg-terracotta-50 border border-terracotta-400/40 text-terracotta-600 hover:bg-terracotta-100 text-xs font-semibold transition-all">🔊 Hear this step</button>
+                </div>
+                <p class="text-[11px] text-jade-700/80 mt-3">When playing, the walkthrough automatically waits until the voice coach finishes speaking each step.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Active Asana Wisdom Card: Sanskrit Name, How to Improve, & Health Benefits -->
+          <div class="glass-card p-5 sm:p-6 border-l-4 border-l-forest-600">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-forest-100 text-forest-800">Active Asana Guide</span>
+                <h3 id="guideAsanaTitle" class="font-display font-bold text-lg sm:text-xl text-forest-950 mt-1">
+                  Tadasana (ताडासन) — Mountain Pose
+                </h3>
+              </div>
+              <span id="guideAsanaFocus" class="px-3 py-1 rounded-xl bg-marigold-100/80 border border-marigold-400/40 text-amber-900 text-xs font-bold">
+                Focus: Posture &amp; Grounding
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+              <!-- How to Improve Your Pose -->
+              <div class="bg-cream-100/90 rounded-2xl p-4 border border-forest-200/70">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-jade-800 flex items-center gap-1.5 mb-2">
+                  <span>🧘</span> How to Perfect &amp; Improve This Pose
+                </h4>
+                <ul id="guideImproveList" class="space-y-1.5 text-xs text-forest-950/85 leading-relaxed list-disc pl-4">
+                  <!-- Populated dynamically -->
+                </ul>
+              </div>
+
+              <!-- Health Benefits -->
+              <div class="bg-forest-50/90 rounded-2xl p-4 border border-forest-200">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-forest-800 flex items-center gap-1.5 mb-2">
+                  <span>🌿</span> Key Health &amp; Mind Benefits
+                </h4>
+                <ul id="guideBenefitsList" class="space-y-1.5 text-xs text-forest-950/85 leading-relaxed list-disc pl-4">
+                  <!-- Populated dynamically -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Explainable 0-100 Score & Joint Breakdown (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-display font-bold text-base text-forest-950">Live Alignment Score</h3>
+                <p class="text-xs text-jade-700">Joint accuracy, balance &amp; symmetry</p>
+              </div>
+              <button onclick="logPracticeSession()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white text-xs font-bold shadow-sm transition-all">
+                + Log Session (+50 XP)
+              </button>
+            </div>
+
+            <!-- Big Score + 3 Motor Skill Pills -->
+            <div class="grid grid-cols-12 gap-3 items-center mb-5">
+              <div class="col-span-5 bg-forest-50 border border-forest-200 rounded-2xl p-4 text-center">
+                <span id="overallScoreValue" class="font-display font-extrabold text-4xl text-forest-700">--</span>
+                <span class="text-xs font-bold text-jade-700 block mt-0.5">/ 100 pts</span>
+                <span id="scoreGradeBadge" class="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white text-jade-800 border border-forest-200">Awaiting Body</span>
+              </div>
+
+              <div class="col-span-7 space-y-2">
+                <div class="bg-cream-50 border border-forest-200/70 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] font-semibold text-jade-700">Balance &amp; Sway</p>
+                    <p id="swayMetricText" class="text-xs font-bold text-forest-950">--</p>
+                  </div>
+                  <span id="swayBadge" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-forest-100 text-forest-800">Steady</span>
+                </div>
+
+                <div class="bg-cream-50 border border-forest-200/70 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] font-semibold text-jade-700">Left / Right Symmetry</p>
+                    <p id="symmetryMetricText" class="text-xs font-bold text-forest-950">--</p>
+                  </div>
+                  <span id="symmetryBadge" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-forest-100 text-forest-800">Balanced</span>
+                </div>
+
+                <div class="bg-cream-50 border border-forest-200/70 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <div>
+                    <p class="text-[11px] font-semibold text-jade-700">Aligned Hold Streak</p>
+                    <p id="streakMetricText" class="text-xs font-bold text-forest-950">0.0s (needs ≥75 pts)</p>
+                  </div>
+                  <span id="holdStatusPill" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-cream-200 text-jade-800">Standby</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joint-by-Joint Angle Breakdown -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-jade-700 mb-2.5">Joint-by-Joint Feedback</h4>
+              <div id="jointBreakdownList" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                <div class="p-4 rounded-2xl bg-cream-100 border border-forest-200/70 text-xs text-jade-800 text-center">
+                  Start your webcam to see live knee, hip, shoulder, and elbow angle guidance.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 2: MEDITATION & PRANAYAMA FOCUS SANCTUARY
+         ===================================================================== -->
+    <section id="view-meditate" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 7 Cols: Interactive Breathing Lotus Orb & Timer Controls -->
+        <div class="lg:col-span-7 glass-card p-6 sm:p-8 glass-emerald-dark text-white relative overflow-hidden">
+          <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-forest-400/15 blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-lotus-500/15 blur-3xl pointer-events-none"></div>
+
+          <div class="relative z-10 flex flex-col items-center text-center">
+            <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-forest-400/20 text-forest-200 border border-forest-300/30">
+                🪷 Mindful Stillness &amp; Breathwork
+              </span>
+              <button onclick="ringTibetanBowl(1.0)" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-marigold-400/20 hover:bg-marigold-400/30 text-marigold-400 border border-marigold-400/40 transition-all flex items-center gap-1.5">
+                <span>🥣</span> Ring Singing Bowl
+              </button>
+            </div>
+
+            <h2 class="font-serif italic text-3xl sm:text-4xl font-bold text-white tracking-wide">
+              Inner Canopy Meditation
+            </h2>
+            <p class="text-xs sm:text-sm text-forest-100/80 max-w-md mt-1">
+              Settle your breath, choose an offline botanical soundscape, and earn <strong>+35 XP</strong> upon completing your session.
+            </p>
+
+            <!-- Breathing Lotus Visualizer & Digital Countdown -->
+            <div class="relative my-7 w-60 h-60 sm:w-64 sm:h-64 flex items-center justify-center">
+              <div id="breathOuterRing" class="absolute inset-0 rounded-full border-2 border-forest-300/30 bg-forest-400/10 transition-transform duration-1000 ease-in-out lotus-ambient-glow"></div>
+              <div id="breathMiddleRing" class="absolute inset-5 rounded-full border border-marigold-400/35 bg-gradient-to-tr from-forest-500/20 via-jade-500/20 to-lotus-500/15 transition-transform duration-1000 ease-in-out"></div>
+              <div class="relative z-10 w-44 h-44 rounded-full bg-forest-950/90 border-2 border-forest-300/45 shadow-2xl flex flex-col items-center justify-center p-4">
+                <span id="breathCuePhase" class="text-xs font-bold uppercase tracking-widest text-marigold-400 mb-1">
+                  Ready to Begin
+                </span>
+                <span id="meditationTimerDisplay" class="font-mono font-extrabold text-4xl sm:text-5xl text-white tracking-tight">
+                  10:00
+                </span>
+                <span id="meditationSubLabel" class="text-[11px] text-forest-200/80 mt-1">
+                  10 min session
+                </span>
+              </div>
+            </div>
+
+            <!-- Duration Preset Pills -->
+            <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
+              <button onclick="setMeditationMinutes(3)" class="med-preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-forest-100 transition-all" data-mins="3">3 min</button>
+              <button onclick="setMeditationMinutes(5)" class="med-preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-forest-100 transition-all" data-mins="5">5 min</button>
+              <button onclick="setMeditationMinutes(10)" class="med-preset-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-forest-500 text-white border border-forest-300 shadow-md transition-all" data-mins="10">10 min</button>
+              <button onclick="setMeditationMinutes(15)" class="med-preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-forest-100 transition-all" data-mins="15">15 min</button>
+              <button onclick="setMeditationMinutes(20)" class="med-preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-forest-100 transition-all" data-mins="20">20 min</button>
+            </div>
+
+            <!-- Custom Minutes Slider -->
+            <div class="w-full max-w-xs mb-6">
+              <div class="flex justify-between text-[11px] text-forest-200 mb-1">
+                <span>Custom Duration</span>
+                <span id="customMedMinsLabel" class="font-mono font-bold text-marigold-400">10 mins</span>
+              </div>
+              <input id="customMedSlider" type="range" min="1" max="60" value="10" oninput="setMeditationMinutes(this.value)" class="w-full" />
+            </div>
+
+            <!-- Primary Timer Action Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button id="btnMeditationStartPause" onclick="toggleMeditationTimer()" class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-forest-400 via-forest-500 to-marigold-500 hover:brightness-110 text-forest-950 font-extrabold text-sm shadow-xl transition-all flex items-center gap-2">
+                <span id="medStartIcon">▶</span>
+                <span id="medStartLabel">Begin Meditation</span>
+              </button>
+              <button onclick="resetMeditationTimer()" class="px-4 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all">
+                ↺ Reset
+              </button>
+              <button onclick="completeMeditationEarly()" class="px-4 py-3.5 rounded-2xl bg-terracotta-500/25 hover:bg-terracotta-500/40 text-terracotta-100 text-xs font-bold border border-terracotta-400/40 transition-all">
+                ✓ Finish &amp; Log
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 5 Cols: Ambient Soundscape Mixer & Breathing Cadence Selector -->
+        <div class="lg:col-span-5 space-y-5">
+          <!-- Offline Web Audio Soundscapes -->
+          <div class="glass-card p-6">
+            <div class="flex items-center justify-between mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-forest-100 text-forest-800">100% Offline Web Audio</span>
+              <span id="ambientStatusBadge" class="text-xs font-semibold text-jade-700">Ready</span>
+            </div>
+            <h3 class="font-display font-bold text-lg text-forest-950 mt-1">Ambient Soundscapes</h3>
+            <p class="text-xs text-jade-700 mb-4">Synthesized soothing nature &amp; harmonic drones to deepen focus.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="soundscapeGrid">
+              <button onclick="selectAmbientSound('rain')" id="sound-rain" class="sound-card-btn text-left p-3.5 rounded-2xl border-2 border-forest-500 bg-forest-50 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xl">🌧️</span>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-forest-600 text-white">Selected</span>
+                </div>
+                <p class="font-display font-bold text-sm text-forest-950 mt-1.5">Monsoon Rain</p>
+                <p class="text-[11px] text-jade-700">Soft warm rainfall</p>
+              </button>
+
+              <button onclick="selectAmbientSound('ocean')" id="sound-ocean" class="sound-card-btn text-left p-3.5 rounded-2xl border border-forest-200 bg-white hover:border-forest-400 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xl">🌊</span>
+                </div>
+                <p class="font-display font-bold text-sm text-forest-950 mt-1.5">Ocean Surf</p>
+                <p class="text-[11px] text-jade-700">Rhythmic coastal waves</p>
+              </button>
+
+              <button onclick="selectAmbientSound('forest')" id="sound-forest" class="sound-card-btn text-left p-3.5 rounded-2xl border border-forest-200 bg-white hover:border-forest-400 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xl">🌲</span>
+                </div>
+                <p class="font-display font-bold text-sm text-forest-950 mt-1.5">Forest Breeze &amp; Chimes</p>
+                <p class="text-[11px] text-jade-700">Canopy breeze &amp; bells</p>
+              </button>
+
+              <button onclick="selectAmbientSound('om')" id="sound-om" class="sound-card-btn text-left p-3.5 rounded-2xl border border-forest-200 bg-white hover:border-forest-400 transition-all">
+                <div class="flex items-center justify-between">
+                  <span class="text-xl">🕉️</span>
+                </div>
+                <p class="font-display font-bold text-sm text-forest-950 mt-1.5">432Hz Tanpura Drone</p>
+                <p class="text-[11px] text-jade-700">Deep harmonic fifths</p>
+              </button>
+
+              <button onclick="selectAmbientSound('silence')" id="sound-silence" class="sound-card-btn sm:col-span-2 text-left p-3 rounded-2xl border border-forest-200 bg-cream-50 hover:border-forest-400 transition-all flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-lg">🔕</span>
+                  <div>
+                    <p class="font-display font-bold text-xs sm:text-sm text-forest-950">Silent Focus (Singing Bowl Bells Only)</p>
+                    <p class="text-[11px] text-jade-700">Chimes softly at start &amp; completion</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Ambient Volume Control -->
+            <div class="mt-4 pt-4 border-t border-forest-200/70">
+              <div class="flex justify-between text-xs font-bold text-forest-900 mb-1.5">
+                <span>🔈 Ambient Sound Volume</span>
+                <span id="ambientVolumeLabel" class="font-mono text-forest-700">55%</span>
+              </div>
+              <input id="ambientVolumeSlider" type="range" min="0" max="100" value="55" oninput="updateAmbientVolume(this.value)" class="w-full" />
+            </div>
+          </div>
+
+          <!-- Guided Breathwork Rhythm Selector -->
+          <div class="glass-card p-6 border-l-4 border-l-lotus-500">
+            <h3 class="font-display font-bold text-base text-forest-950">Guided Breath Pacing</h3>
+            <p class="text-xs text-jade-700 mb-3">Sync the lotus orb expansion to a calming pranayama rhythm.</p>
+
+            <div class="grid grid-cols-2 gap-2" id="breathPatternGrid">
+              <button onclick="selectBreathPattern('coherent')" id="breath-coherent" class="breath-btn p-3 rounded-2xl border-2 border-forest-500 bg-forest-50 text-left transition-all">
+                <p class="text-xs font-bold text-forest-950">Coherent (5-5s)</p>
+                <p class="text-[11px] text-jade-700">5s Inhale • 5s Exhale</p>
+              </button>
+              <button onclick="selectBreathPattern('box')" id="breath-box" class="breath-btn p-3 rounded-2xl border border-forest-200 bg-white text-left hover:border-forest-400 transition-all">
+                <p class="text-xs font-bold text-forest-950">Box Focus (4-4-4-4s)</p>
+                <p class="text-[11px] text-jade-700">In • Hold • Out • Hold</p>
+              </button>
+              <button onclick="selectBreathPattern('relax478')" id="breath-relax478" class="breath-btn p-3 rounded-2xl border border-forest-200 bg-white text-left hover:border-forest-400 transition-all">
+                <p class="text-xs font-bold text-forest-950">Deep Calm (4-7-8s)</p>
+                <p class="text-[11px] text-jade-700">4s In • 7s Hold • 8s Out</p>
+              </button>
+              <button onclick="selectBreathPattern('free')" id="breath-free" class="breath-btn p-3 rounded-2xl border border-forest-200 bg-white text-left hover:border-forest-400 transition-all">
+                <p class="text-xs font-bold text-forest-950">Silent Focus</p>
+                <p class="text-[11px] text-jade-700">Unpaced open awareness</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 3: PERSONAL WELLNESS GOALS, YOGA PLAN BUILDER & WALK PLANNER
+         ===================================================================== -->
+    <section id="view-goals" class="hidden space-y-6">
+      <!-- Goal & Session Depth Selection Banner -->
+      <div class="glass-card p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-marigold-100 text-amber-900">Tailored Daily Routine</span>
+            <h2 class="font-display font-bold text-xl sm:text-2xl text-forest-950 mt-1">Customize Your Yoga &amp; Walking Prescription</h2>
+            <p class="text-xs sm:text-sm text-jade-700">Choose your wellness goal and preferred session depth to generate a timed asana sequence, rest intervals, and daily schedule.</p>
+          </div>
+
+          <!-- Session Depth / Intensity Selector -->
+          <div class="flex flex-col sm:items-end gap-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-jade-700">Daily Session Depth</span>
+            <div class="inline-flex rounded-2xl bg-cream-100 p-1 border border-forest-200" id="planIntensitySelector">
+              <button onclick="selectPlanIntensity('quick')" id="intensity-quick" class="intensity-btn px-3 py-1.5 rounded-xl text-xs font-bold text-forest-900 transition-all">
+                🌱 Quick 10m (30s)
+              </button>
+              <button onclick="selectPlanIntensity('standard')" id="intensity-standard" class="intensity-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-forest-600 text-white shadow-sm transition-all">
+                🌿 Balanced 20m (45s)
+              </button>
+              <button onclick="selectPlanIntensity('deep')" id="intensity-deep" class="intensity-btn px-3 py-1.5 rounded-xl text-xs font-bold text-forest-900 transition-all">
+                🔥 Deep 30m (60s)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Goal Selector Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="goalSelectorGrid">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Structured Daily Yoga Prescription Card -->
+      <div class="glass-card p-6 sm:p-7 border-t-4 border-t-forest-600">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-forest-200/70">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-forest-600 text-white">🧘 Personalized Yoga Prescription</span>
+              <span id="yogaPlanScheduleBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-marigold-100 text-amber-900 border border-marigold-400/40">
+                2x Daily • 7:00 AM Sunrise &amp; 6:30 PM Sunset
+              </span>
+            </div>
+            <h3 id="yogaPlanTitle" class="font-display font-extrabold text-xl sm:text-2xl text-forest-950 mt-2">
+              Parasympathetic Grounding &amp; Serenity Sequence
+            </h3>
+            <p id="yogaPlanSubtitle" class="text-xs sm:text-sm text-jade-800 mt-1">
+              4 Asanas • 45s hold per pose • 15s mindful rest between poses • ~4 mins per round
+            </p>
+          </div>
+
+          <button onclick="launchGuidedYogaPlan()" class="px-6 py-4 rounded-2xl bg-gradient-to-r from-forest-600 via-jade-600 to-forest-700 hover:brightness-110 text-white font-extrabold text-sm shadow-xl shadow-forest-700/25 transition-all flex items-center justify-center gap-2.5 shrink-0">
+            <span class="text-lg">▶</span>
+            <span>Start Guided Plan in Camera (+80 XP)</span>
+          </button>
+        </div>
+
+        <!-- Daily Frequency, Optimal Timing, Hold & Rest Summary Pills -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
+          <div class="bg-cream-50 border border-forest-200 rounded-2xl p-3.5">
+            <p class="text-[11px] font-bold uppercase text-jade-700">Hold Per Asana</p>
+            <p id="planMetaHold" class="font-display font-extrabold text-lg text-forest-950 mt-0.5">45 seconds</p>
+          </div>
+          <div class="bg-cream-50 border border-forest-200 rounded-2xl p-3.5">
+            <p class="text-[11px] font-bold uppercase text-jade-700">Rest Between Poses</p>
+            <p id="planMetaRest" class="font-display font-extrabold text-lg text-terracotta-600 mt-0.5">15 seconds</p>
+          </div>
+          <div class="bg-cream-50 border border-forest-200 rounded-2xl p-3.5">
+            <p class="text-[11px] font-bold uppercase text-jade-700">Daily Frequency</p>
+            <p id="planMetaFreq" class="font-display font-extrabold text-lg text-forest-800 mt-0.5">2 times / day</p>
+          </div>
+          <div class="bg-cream-50 border border-forest-200 rounded-2xl p-3.5">
+            <p class="text-[11px] font-bold uppercase text-jade-700">Ideal Practice Windows</p>
+            <p id="planMetaWindow" class="font-display font-bold text-xs sm:text-sm text-forest-950 mt-1">7:00 AM &amp; 6:30 PM</p>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Sequenced Asana Timeline -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-jade-800 mb-3">Your Scheduled Sequence (Camera Auto-Tracks Each Step)</h4>
+          <div id="yogaPlanSequenceCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tailored Walking Prescription + Recommended Asanas Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left 6 Cols: Tailored Walking Plan -->
+        <div class="lg:col-span-6 glass-card p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-forest-100 text-forest-800">🚶 Tailored Walking Prescription</span>
+              <span id="walkBestTimePill" class="text-xs font-semibold text-jade-700">Best: Sunset / Evening</span>
+            </div>
+            <h3 id="walkPlanHeadline" class="font-display font-bold text-xl text-forest-950">30-Minute Parasympathetic Mindful Walk</h3>
+            <p id="walkPlanDescription" class="text-xs sm:text-sm text-jade-800 mt-1.5 leading-relaxed">
+              A steady, unhurried outdoor walk focused on nasal breathing and rhythmic strides to lower cortisol and quiet mental chatter.
+            </p>
+
+            <!-- 3 Walking Metrics -->
+            <div class="grid grid-cols-3 gap-3 my-5">
+              <div class="bg-cream-100 border border-forest-200/70 rounded-2xl p-3.5 text-center">
+                <p class="text-[11px] font-semibold text-jade-700">Duration</p>
+                <p id="walkDurationVal" class="font-display font-bold text-lg text-forest-950 mt-0.5">30 mins</p>
+              </div>
+              <div class="bg-cream-100 border border-forest-200/70 rounded-2xl p-3.5 text-center">
+                <p class="text-[11px] font-semibold text-jade-700">Step Target</p>
+                <p id="walkStepsVal" class="font-display font-bold text-lg text-forest-700 mt-0.5">3,500 steps</p>
+              </div>
+              <div class="bg-cream-100 border border-forest-200/70 rounded-2xl p-3.5 text-center">
+                <p class="text-[11px] font-semibold text-jade-700">Target Pace</p>
+                <p id="walkPaceVal" class="font-display font-bold text-sm sm:text-base text-forest-950 mt-1">Relaxed (4 km/h)</p>
+              </div>
+            </div>
+
+            <!-- Walking Technique & Breathing Tip -->
+            <div class="bg-forest-50 border border-forest-200 rounded-2xl p-4">
+              <p class="text-xs font-bold text-forest-800 mb-1">🌬️ Mindful Walking Technique</p>
+              <p id="walkTechniqueTip" class="text-xs text-forest-950/85 leading-relaxed">
+                Inhale for 4 steps through your nose, exhale for 6 steps. Leave headphones behind for the first 10 minutes to anchor your senses.
+              </p>
+            </div>
+          </div>
+
+          <button onclick="completeRecommendedWalk()" class="mt-5 w-full py-3.5 rounded-2xl bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2">
+            <span>👟</span> Mark Today's Walk Complete (+30 XP)
+          </button>
+        </div>
+
+        <!-- Right 6 Cols: Recommended Asanas for Chosen Goal -->
+        <div class="lg:col-span-6 glass-card p-6">
+          <h3 class="font-display font-bold text-lg text-forest-950">Individual Pose Practice</h3>
+          <p class="text-xs text-jade-700 mb-4">Want to practice a single posture first? Launch any pose below in the Live Camera Studio.</p>
+          <div id="goalRecommendedAsanasList" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Complete 8-Asana Sanskrit & Health Benefits Encyclopedia -->
+      <div class="glass-card p-6">
+        <div class="mb-4">
+          <h3 class="font-display font-bold text-xl text-forest-950">Complete 8-Asana Sanskrit &amp; Health Guide</h3>
+          <p class="text-xs text-jade-700">Explore traditional Sanskrit names, alignment cues, and therapeutic benefits for all 8 supported poses.</p>
+        </div>
+        <div id="allAsanasEncyclopediaGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 4: CHALLENGES, ACHIEVEMENTS & COLLECTIBLE BOTANICAL BADGES
+         ===================================================================== -->
+    <section id="view-challenges" class="hidden space-y-6">
+      <!-- Top Trophy & Milestone Header Banner -->
+      <div class="rounded-3xl glass-emerald-dark text-white p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div class="absolute -right-16 -bottom-16 w-64 h-64 rounded-full bg-marigold-400/15 blur-3xl pointer-events-none"></div>
+        <div class="space-y-1.5 relative z-10">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-marigold-400/20 text-marigold-300 border border-marigold-400/40">
+            🏆 PranaSync Milestones &amp; Sanctuary Seals
+          </span>
+          <h2 class="font-serif italic text-3xl sm:text-4xl font-bold text-white">
+            Challenges &amp; Botanical Badges
+          </h2>
+          <p class="text-xs sm:text-sm text-forest-100/85 max-w-xl">
+            Complete daily and weekly mindful challenges to earn bonus XP and unlock 8 collectible botanical &amp; Sanskrit badges across your yoga, meditation, walking, and journaling journey.
+          </p>
+        </div>
+
+        <div class="relative z-10 flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-5 py-4 shrink-0">
+          <div class="text-center pr-4 border-r border-white/15">
+            <p class="text-[11px] uppercase font-bold text-forest-300">Badges Unlocked</p>
+            <p id="badgesUnlockedSummary" class="font-display font-extrabold text-2xl sm:text-3xl text-marigold-400">1 / 8</p>
+          </div>
+          <div class="text-center">
+            <p class="text-[11px] uppercase font-bold text-forest-300">Active Challenges</p>
+            <p id="challengesCompletedSummary" class="font-display font-extrabold text-2xl sm:text-3xl text-forest-300">0 / 5</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Daily & Weekly Challenges Grid -->
+      <div class="glass-card p-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="font-display font-bold text-xl text-forest-950">Active Mindful Challenges</h3>
+            <p class="text-xs text-jade-700">Progress updates automatically as you hold poses, finish guided plans, meditate, walk, and journal.</p>
+          </div>
+          <span class="px-3 py-1 rounded-xl bg-forest-50 border border-forest-200 text-xs font-bold text-forest-800">
+            Auto-Tracked Offline
+          </span>
+        </div>
+
+        <div id="activeChallengesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Collectible Botanical & Chakra Badges Showcase -->
+      <div class="glass-card p-6">
+        <div class="mb-4">
+          <h3 class="font-display font-bold text-xl text-forest-950">Collectible Botanical &amp; Sanskrit Badges</h3>
+          <p class="text-xs text-jade-700">Unlock all 8 sacred sanctuary seals by building consistency across mind and body.</p>
+        </div>
+
+        <div id="collectibleBadgesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 5: DAILY REFLECTION JOURNAL, MIND-BODY CHECK-IN & SCREENERS
+         ===================================================================== -->
+    <section id="view-wellness" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Column: Daily Check-In + Daily Reflection Journal (6 cols) -->
+        <div class="lg:col-span-6 space-y-6">
+          <!-- Daily Reflection Journal Card (+35 XP) -->
+          <div class="glass-card p-6 border-t-4 border-t-terracotta-500">
+            <div class="flex items-center justify-between mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-terracotta-100 text-terracotta-600">📓 Daily Mindful Journal (+35 XP)</span>
+              <span class="text-xs text-jade-700 font-medium" id="journalDateLabel">Today</span>
+            </div>
+            <h2 class="font-display font-bold text-xl text-forest-950 mt-1">Daily Reflection &amp; Gratitude Entry</h2>
+            <p class="text-xs text-jade-700 mb-4">Write a quick reflection on how your body and mind feel today to build your streak and earn XP.</p>
+
+            <!-- Quick Reflection Prompt Pills -->
+            <div class="mb-3">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-jade-700 mb-1.5">Tap a prompt to insert:</p>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" onclick="insertJournalPrompt('After today\'s yoga & walk, my body feels... ')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-forest-50 hover:bg-forest-100 text-forest-900 border border-forest-200 transition-all">
+                  🧘 Body sensation
+                </button>
+                <button type="button" onclick="insertJournalPrompt('One thing I am grateful for today is... ')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-marigold-100/70 hover:bg-marigold-100 text-amber-950 border border-marigold-400/40 transition-all">
+                  💛 Gratitude
+                </button>
+                <button type="button" onclick="insertJournalPrompt('A stressor I am letting go of right now is... ')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-lotus-100/70 hover:bg-lotus-100 text-purple-950 border border-lotus-500/30 transition-all">
+                  🍃 Letting go
+                </button>
+              </div>
+            </div>
+
+            <textarea id="dailyJournalTextarea" rows="4" placeholder="Write freely about your practice, energy levels, walk, or thoughts today (saved 100% privately on your device)..." class="w-full rounded-2xl bg-cream-50 border border-forest-200 p-3.5 text-sm text-forest-950 focus:outline-none focus:border-forest-600 transition-all"></textarea>
+
+            <button onclick="saveJournalEntry()" class="mt-3 w-full py-3.5 rounded-2xl bg-gradient-to-r from-terracotta-500 to-marigold-500 hover:brightness-105 text-white font-bold text-sm shadow-md transition-all">
+              Save Journal Entry &amp; Claim +35 XP
+            </button>
+
+            <!-- Recent Offline Journal Entries Feed -->
+            <div class="mt-5 pt-4 border-t border-forest-200/70">
+              <div class="flex items-center justify-between mb-2.5">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-jade-700">Your Private Journal Timeline</h4>
+                <span id="journalCountBadge" class="text-xs font-bold text-forest-700">0 entries</span>
+              </div>
+              <div id="journalHistoryList" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-1-Minute Daily Check-In (+25 XP) -->
+          <div class="glass-card p-6">
+            <div class="flex items-center justify-between mb-1">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-forest-100 text-forest-800">Quick Check-In (+25 XP)</span>
+              <span class="text-xs text-jade-700 font-medium" id="todayDateLabel">Today</span>
+            </div>
+            <h2 class="font-display font-bold text-xl text-forest-950 mt-1">Daily Mood, Stress &amp; Sleep</h2>
+
+            <div class="space-y-4 mt-4">
+              <div class="bg-cream-50 p-3.5 rounded-2xl border border-forest-200/70">
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="moodInput" class="text-xs sm:text-sm font-bold text-forest-950">Overall Mood</label>
+                  <span id="moodDisplay" class="text-xs sm:text-sm font-bold text-forest-700">4 / 5 — Calm &amp; Steady</span>
+                </div>
+                <input id="moodInput" type="range" min="1" max="5" step="1" value="4" oninput="updateCheckinLabels()" class="w-full" />
+              </div>
+
+              <div class="bg-cream-50 p-3.5 rounded-2xl border border-forest-200/70">
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="stressInput" class="text-xs sm:text-sm font-bold text-forest-950">Perceived Stress</label>
+                  <span id="stressDisplay" class="text-xs sm:text-sm font-bold text-terracotta-600">2 / 5 — Mild Tension</span>
+                </div>
+                <input id="stressInput" type="range" min="1" max="5" step="1" value="2" oninput="updateCheckinLabels()" class="w-full" />
+              </div>
+
+              <div class="bg-cream-50 p-3.5 rounded-2xl border border-forest-200/70">
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="sleepInput" class="text-xs sm:text-sm font-bold text-forest-950">Sleep Quality</label>
+                  <span id="sleepDisplay" class="text-xs sm:text-sm font-bold text-forest-700">4 / 5 — Restorative</span>
+                </div>
+                <input id="sleepInput" type="range" min="1" max="5" step="1" value="4" oninput="updateCheckinLabels()" class="w-full" />
+              </div>
+
+              <button onclick="saveDailyCheckin()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-forest-600 to-jade-600 hover:from-forest-700 hover:to-jade-700 text-white font-bold text-sm shadow-md transition-all">
+                Save Check-In (+25 XP)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Periodic PHQ-9 & GAD-7 Screeners + Tele-MANAS Safety Card (6 cols) -->
+        <div class="lg:col-span-6 space-y-5">
+          <!-- Critical Safety Resource Card (Triggered dynamically if PHQ-9 Item 9 > 0) -->
+          <div id="teleManasSafetyCard" class="hidden rounded-3xl bg-rose-50 border-2 border-rose-400 p-5 sm:p-6 shadow-lg transition-all">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 text-xl font-bold">
+                ♥
+              </div>
+              <div class="flex-1">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="font-display font-bold text-lg text-rose-950">You Don't Have to Carry This Alone — Free 24/7 Support</h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-200 text-rose-900">Immediate Care</span>
+                </div>
+                <p class="text-sm text-rose-900 mt-1.5 leading-relaxed">
+                  Your response to Question 9 indicates you may be experiencing thoughts of self-harm or distress. Please reach out to a trained mental health counselor right now—confidentially and free of cost.
+                </p>
+
+                <div class="mt-4 bg-white rounded-2xl p-4 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-rose-700">Tele-MANAS (Govt. of India 24/7 Mental Health Helpline)</p>
+                    <p class="text-xl font-display font-bold text-slate-900 mt-0.5">Dial <span class="text-rose-700">14416</span> or <span class="text-rose-700">1-800-891-4416</span></p>
+                    <p class="text-xs text-slate-600 mt-0.5">Available in 20+ Indian languages • Free &amp; Confidential</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <a href="tel:14416" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-all">
+                      Call 14416 Now
+                    </a>
+                    <button onclick="copyHelpline('14416')" class="px-3.5 py-2.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-800 text-xs font-bold border border-forest-200 transition-all">
+                      Copy Number
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questionnaire Switcher Card -->
+          <div class="glass-card p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-forest-200/70">
+              <div>
+                <h2 class="font-display font-bold text-xl text-forest-950">Periodic Self-Reflection Screeners</h2>
+                <p class="text-xs text-jade-700">Over the last 2 weeks, how often have you been bothered by the following?</p>
+              </div>
+              <div class="inline-flex rounded-2xl bg-cream-100 p-1 border border-forest-200">
+                <button id="btnScreenerPHQ9" onclick="switchScreener('phq9')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-forest-600 text-white transition-all">
+                  PHQ-9 (Mood / 9 items)
+                </button>
+                <button id="btnScreenerGAD7" onclick="switchScreener('gad7')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-forest-900 transition-all">
+                  GAD-7 (Anxiety / 7 items)
+                </button>
+              </div>
+            </div>
+
+            <!-- PHQ-9 Container -->
+            <div id="phq9Panel" class="mt-4 space-y-4">
+              <div id="phq9QuestionsList" class="space-y-3 max-h-[540px] overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+
+              <div class="bg-forest-50 border border-forest-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-forest-700">PHQ-9 Total Score</span>
+                  <div class="flex items-baseline gap-2.5 mt-0.5">
+                    <span id="phq9TotalScore" class="font-display font-bold text-2xl text-forest-950">0 / 27</span>
+                    <span id="phq9SeverityBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-forest-100 text-forest-800">Minimal (0–4)</span>
+                  </div>
+                  <p class="text-[11px] text-jade-700 mt-1">Guide: 0–4 Minimal • 5–9 Mild • 10–14 Moderate • 15–19 Mod. Severe • 20–27 Severe</p>
+                </div>
+                <button onclick="saveScreenerResult('PHQ-9')" class="px-4 py-2.5 rounded-xl bg-forest-600 hover:bg-forest-700 text-white text-xs font-bold shrink-0">
+                  Save PHQ-9 (+40 XP)
+                </button>
+              </div>
+            </div>
+
+            <!-- GAD-7 Container -->
+            <div id="gad7Panel" class="hidden mt-4 space-y-4">
+              <div id="gad7QuestionsList" class="space-y-3 max-h-[540px] overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+
+              <div class="bg-forest-50 border border-forest-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-forest-700">GAD-7 Total Score</span>
+                  <div class="flex items-baseline gap-2.5 mt-0.5">
+                    <span id="gad7TotalScore" class="font-display font-bold text-2xl text-forest-950">0 / 21</span>
+                    <span id="gad7SeverityBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-forest-100 text-forest-800">Minimal (0–4)</span>
+                  </div>
+                  <p class="text-[11px] text-jade-700 mt-1">Guide: 0–4 Minimal • 5–9 Mild • 10–14 Moderate • 15–21 Severe Anxiety</p>
+                </div>
+                <button onclick="saveScreenerResult('GAD-7')" class="px-4 py-2.5 rounded-xl bg-forest-600 hover:bg-forest-700 text-white text-xs font-bold shrink-0">
+                  Save GAD-7 (+40 XP)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 6: ANALYTICS & REWARDS PROGRESS DASHBOARD
+         ===================================================================== -->
+    <section id="view-analytics" class="hidden space-y-6">
+      <!-- Top KPI Summary Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 border-l-4 border-l-forest-500">
+          <p class="text-xs font-semibold text-jade-700">14-Day Practice Total</p>
+          <p id="kpiTotalMins" class="font-display font-bold text-2xl text-forest-950 mt-1">245 mins</p>
+          <p class="text-xs text-forest-700 font-semibold mt-1">↑ 18% consistency boost</p>
+        </div>
+        <div class="glass-card p-4 border-l-4 border-l-jade-500">
+          <p class="text-xs font-semibold text-jade-700">Mean Alignment Score</p>
+          <p id="kpiMeanAlignment" class="font-display font-bold text-2xl text-forest-700 mt-1">83.4 / 100</p>
+          <p class="text-xs text-jade-700 mt-1">Across 8 Sanskrit asanas</p>
+        </div>
+        <div class="glass-card p-4 border-l-4 border-l-terracotta-500">
+          <p class="text-xs font-semibold text-jade-700">Avg Stress (Practice Days)</p>
+          <p id="kpiStressPractice" class="font-display font-bold text-2xl text-forest-950 mt-1">2.1 / 5.0</p>
+          <p class="text-xs text-forest-700 font-semibold mt-1">vs 3.4 on rest days</p>
+        </div>
+        <div class="glass-card p-4 border-l-4 border-l-marigold-500">
+          <p class="text-xs font-semibold text-jade-700">Total Wellness XP</p>
+          <p id="kpiTotalXpAnalytics" class="font-display font-bold text-2xl text-marigold-600 mt-1">0 XP</p>
+          <p id="kpiRankAnalytics" class="text-xs text-jade-700 mt-1">Rank: Novice Yogi</p>
+        </div>
+      </div>
+
+      <!-- Dual-Axis Trend Chart & Plain-Language Insights -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 glass-card p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="font-display font-bold text-lg text-forest-950">Practice Consistency vs. Self-Reported Stress &amp; Mood</h2>
+              <p class="text-xs text-jade-700">14-day local longitudinal view (Yoga, Meditation &amp; Walks aligned with Daily Check-ins)</p>
+            </div>
+            <button onclick="resetDemoAnalytics()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-cream-100 hover:bg-cream-200 text-forest-900 border border-forest-200">
+              Reset Sample Data
+            </button>
+          </div>
+          <div class="relative w-full h-72 sm:h-80">
+            <canvas id="wellnessTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Plain-Language Insights & Methodological Disclaimer -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="glass-card p-5">
+            <h3 class="font-display font-bold text-base text-forest-950 mb-3">Plain-Language Trend Summary</h3>
+            <ul id="plainLanguageInsights" class="space-y-3 text-xs sm:text-sm text-forest-950/85 leading-relaxed">
+              <li class="p-3 rounded-2xl bg-forest-50 border border-forest-200">
+                <strong class="text-forest-800">Movement &amp; Calmness Pattern:</strong> On days you completed at least 15 minutes of yoga, meditation, or walking, your self-reported stress averaged <strong>1.3 points lower</strong> than on inactive days.
+              </li>
+              <li class="p-3 rounded-2xl bg-cream-100 border border-forest-200/70">
+                <strong class="text-forest-950">Posture Mastery Gain:</strong> Your average alignment score improved from <strong>76 to 86</strong> over two weeks, driven by steadier knee &amp; hip stability.
+              </li>
+              <li class="p-3 rounded-2xl bg-cream-100 border border-forest-200/70">
+                <strong class="text-forest-950">Circadian Rhythm Harmony:</strong> Evening Twilight mode reduces blue-light glare during late meditation and breathwork sessions.
+              </li>
+            </ul>
+
+            <div class="mt-4 p-3.5 rounded-2xl bg-marigold-100/60 border border-marigold-400/40 text-xs text-amber-950">
+              <p class="font-bold flex items-center gap-1.5">
+                <span>ℹ️</span> Methodological Note
+              </p>
+              <p class="mt-1 leading-relaxed">
+                <strong>Correlation does not imply causation.</strong> These visual trends highlight personal co-occurrences between mindful habits and self-reported states, not medical diagnosis.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Minti Botanical Companion Mascot -->
+  <aside id="pranaMascot" class="fixed bottom-5 left-4 z-40 flex items-end gap-2" aria-live="polite">
+    <div class="mascot-float relative flex items-center justify-center shadow-lg">
+      <svg viewBox="0 0 120 132" role="img" aria-label="Minti, the PranaSync yoga companion">
+        <defs>
+          <linearGradient id="mintiBody" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6EE7B7"/><stop offset="1" stop-color="#059669"/></linearGradient>
+          <linearGradient id="mintiLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A7F3D0"/><stop offset="1" stop-color="#10B981"/></linearGradient>
+        </defs>
+        <path d="M60 23 C40 5 24 13 29 31 C43 33 53 30 60 23Z" fill="url(#mintiLeaf)" stroke="#065F46" stroke-width="2"/>
+        <path d="M61 23 C78 2 99 12 91 32 C77 34 67 30 61 23Z" fill="#34D399" stroke="#065F46" stroke-width="2"/>
+        <path d="M60 22 Q61 10 62 4" fill="none" stroke="#065F46" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="60" cy="73" rx="39" ry="43" fill="url(#mintiBody)" stroke="#064E3B" stroke-width="2.5"/>
+        <ellipse cx="48" cy="67" rx="5" ry="7" fill="#062E22"/>
+        <ellipse cx="72" cy="67" rx="5" ry="7" fill="#062E22"/>
+        <circle cx="46.5" cy="64.5" r="1.7" fill="white"/><circle cx="70.5" cy="64.5" r="1.7" fill="white"/>
+        <path d="M51 83 Q60 93 70 82" fill="none" stroke="#064E3B" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="39" cy="78" rx="7" ry="4" fill="#F48C71" opacity=".82"/><ellipse cx="81" cy="78" rx="7" ry="4" fill="#F48C71" opacity=".82"/>
+        <path d="M25 82 Q9 91 16 104" fill="none" stroke="#059669" stroke-width="10" stroke-linecap="round"/>
+        <path d="M94 82 Q109 88 104 102" fill="none" stroke="#059669" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="43" cy="116" rx="13" ry="6" fill="#064E3B"/><ellipse cx="78" cy="116" rx="13" ry="6" fill="#064E3B"/>
+        <path d="M20 45 Q12 39 17 32" fill="none" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+        <path d="M100 48 l5 -8 M104 54 l8 -2" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="60" y="129" text-anchor="middle" font-size="9" font-weight="800" fill="#064E3B">MINTI</text>
+      </svg>
+      <span class="mascot-sparkle absolute -top-1 -right-1 text-marigold-500 text-xl">✦</span>
+    </div>
+    <div class="bg-white/95 backdrop-blur rounded-2xl border border-forest-200 shadow-lg px-3.5 py-2.5 mb-1 max-w-[205px]">
+      <div class="flex items-center justify-between gap-2 mb-0.5">
+        <span class="text-[10px] uppercase tracking-wider font-bold text-forest-700">Minti says</span>
+        <button onclick="dismissMascot()" aria-label="Hide mascot" class="text-jade-600 hover:text-forest-950 text-sm leading-none">×</button>
+      </div>
+      <p id="mascotMessage" class="text-xs text-forest-950 leading-snug">One small breath is still progress. 🌿</p>
+    </div>
+  </aside>
+
+  <!-- Botanical Footer -->
+  <footer class="border-t border-forest-200/80 bg-cream-100/80 py-4 px-4 sm:px-8 mt-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-jade-800">
+      <p><strong class="text-forest-950">PranaSync</strong> • 100% Private Offline Yoga, Meditation &amp; Circadian Wellness Sanctuary</p>
+      <p>24/7 India Mental Health Support (Tele-MANAS): <strong class="text-forest-800">14416</strong> • Non-diagnostic self-reflection tool</p>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       APPLICATION JAVASCRIPT:
+       - ADAPTIVE CIRCADIAN THEME ENGINE (MORNING / CANOPY / TWILIGHT + AUTO)
+       - LIVE MEDIAPIPE WEBCAM POSE ENGINE + DEMO FALLBACK
+       - GROUNDED 4-STEP ANATOMICAL KEYFRAMES + VOICE ONEND SYNC
+       - PROCEDURAL WEB AUDIO MEDITATION & SINGING BOWL ENGINE
+       - GUIDED YOGA PLAN RUNNER, CHALLENGES & BADGES, JOURNAL & ANALYTICS
+       ========================================================================= -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

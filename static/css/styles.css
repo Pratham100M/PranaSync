@@ -1,0 +1,296 @@
+/* =========================================================================
+       ADAPTIVE CIRCADIAN THEME TOKENS (MORNING, CANOPY & TWILIGHT)
+       ========================================================================= */
+    :root,
+    html[data-circadian-theme="canopy"] {
+      color-scheme: light;
+      --bg-gradient:
+        radial-gradient(circle at 8% 12%, rgba(16, 185, 129, 0.13) 0%, transparent 38%),
+        radial-gradient(circle at 92% 18%, rgba(224, 109, 83, 0.08) 0%, transparent 34%),
+        radial-gradient(circle at 82% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+        linear-gradient(180deg, #F4FAF6 0%, #E9F4EE 50%, #F7FCF9 100%);
+      --text-primary: #0D261C;
+      --text-secondary: #1F5B44;
+      --header-bg: rgba(248, 253, 250, 0.90);
+      --header-border: rgba(167, 243, 208, 0.75);
+      --card-bg: rgba(255, 255, 255, 0.90);
+      --card-border: rgba(167, 243, 208, 0.70);
+      --card-shadow: 0 12px 32px -12px rgba(6, 78, 59, 0.12), 0 2px 6px -1px rgba(16, 185, 129, 0.05);
+      --surface-soft: #F3F8F4;
+      --surface-subtle: #FBFDFB;
+      --surface-pill: #FFFFFF;
+      --border-subtle: rgba(167, 243, 208, 0.75);
+      --accent-primary: #059669;
+      --accent-secondary: #F59E0B;
+      --chart-grid: rgba(203, 224, 211, 0.6);
+      --chart-tick: #174C38;
+    }
+
+    html[data-circadian-theme="morning"] {
+      color-scheme: light;
+      --bg-gradient:
+        radial-gradient(circle at 10% 8%, rgba(251, 191, 36, 0.18) 0%, transparent 42%),
+        radial-gradient(circle at 90% 14%, rgba(244, 140, 113, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.11) 0%, transparent 45%),
+        linear-gradient(180deg, #FBFDF7 0%, #F4F9EE 52%, #FFFDF8 100%);
+      --text-primary: #1A2E1D;
+      --text-secondary: #2D5A36;
+      --header-bg: rgba(255, 253, 247, 0.92);
+      --header-border: rgba(251, 191, 36, 0.45);
+      --card-bg: rgba(255, 254, 250, 0.92);
+      --card-border: rgba(167, 243, 208, 0.75);
+      --card-shadow: 0 12px 32px -12px rgba(180, 83, 9, 0.10), 0 2px 8px -1px rgba(16, 185, 129, 0.06);
+      --surface-soft: #F6F9F0;
+      --surface-subtle: #FFFDF8;
+      --surface-pill: #FFFFFF;
+      --border-subtle: rgba(253, 230, 138, 0.85);
+      --accent-primary: #059669;
+      --accent-secondary: #D97706;
+      --chart-grid: rgba(226, 232, 200, 0.65);
+      --chart-tick: #2D5A36;
+    }
+
+    html[data-circadian-theme="twilight"] {
+      color-scheme: dark;
+      --bg-gradient:
+        radial-gradient(circle at 12% 10%, rgba(129, 140, 248, 0.16) 0%, transparent 40%),
+        radial-gradient(circle at 88% 15%, rgba(16, 185, 129, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at 75% 88%, rgba(167, 139, 250, 0.12) 0%, transparent 42%),
+        linear-gradient(180deg, #081214 0%, #0B1618 48%, #0E1D20 100%);
+      --text-primary: #E6F4EE;
+      --text-secondary: #9CD3BE;
+      --header-bg: rgba(11, 22, 24, 0.90);
+      --header-border: rgba(52, 211, 153, 0.22);
+      --card-bg: rgba(16, 34, 36, 0.88);
+      --card-border: rgba(52, 211, 153, 0.22);
+      --card-shadow: 0 16px 38px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(167, 243, 208, 0.08);
+      --surface-soft: #132A2D;
+      --surface-subtle: #0F2326;
+      --surface-pill: #173337;
+      --border-subtle: rgba(52, 211, 153, 0.24);
+      --accent-primary: #34D399;
+      --accent-secondary: #A78BFA;
+      --chart-grid: rgba(52, 211, 153, 0.14);
+      --chart-tick: #9CD3BE;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      transition: background 0.45s ease, color 0.35s ease;
+    }
+
+    /* Elevated Botanical Glass Cards */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      border-radius: 1.5rem;
+      transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .glass-emerald-dark {
+      background: linear-gradient(135deg, #0B281E 0%, #123D2E 52%, #1A523E 100%);
+      border: 1px solid rgba(110, 231, 183, 0.28);
+      box-shadow: 0 16px 36px -10px rgba(6, 78, 59, 0.38);
+    }
+
+    html[data-circadian-theme="twilight"] .glass-emerald-dark {
+      background: linear-gradient(135deg, #0E1F26 0%, #162E38 52%, #1E2942 100%);
+      border: 1px solid rgba(167, 139, 250, 0.32);
+    }
+
+    /* Adaptive Twilight Overrides for Tailwind Light Utility Classes */
+    html[data-circadian-theme="twilight"] .text-forest-950,
+    html[data-circadian-theme="twilight"] .text-forest-900,
+    html[data-circadian-theme="twilight"] .text-slate-900,
+    html[data-circadian-theme="twilight"] .text-slate-800 {
+      color: #E6F4EE !important;
+    }
+    html[data-circadian-theme="twilight"] .text-jade-800,
+    html[data-circadian-theme="twilight"] .text-jade-700,
+    html[data-circadian-theme="twilight"] .text-forest-800,
+    html[data-circadian-theme="twilight"] .text-forest-700 {
+      color: #9CD3BE !important;
+    }
+    html[data-circadian-theme="twilight"] .text-forest-950\/85,
+    html[data-circadian-theme="twilight"] .text-forest-900\/75 {
+      color: rgba(230, 244, 238, 0.84) !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-cream-50,
+    html[data-circadian-theme="twilight"] .bg-cream-100,
+    html[data-circadian-theme="twilight"] .bg-cream-100\/90,
+    html[data-circadian-theme="twilight"] .bg-cream-100\/80,
+    html[data-circadian-theme="twilight"] .bg-forest-50,
+    html[data-circadian-theme="twilight"] .bg-forest-50\/90 {
+      background-color: #132A2D !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-white,
+    html[data-circadian-theme="twilight"] .bg-white\/95,
+    html[data-circadian-theme="twilight"] .bg-white\/90 {
+      background-color: #173337 !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-cream-200 {
+      background-color: #1E3E42 !important;
+    }
+    html[data-circadian-theme="twilight"] .border-forest-200,
+    html[data-circadian-theme="twilight"] .border-forest-200\/80,
+    html[data-circadian-theme="twilight"] .border-forest-200\/70,
+    html[data-circadian-theme="twilight"] .border-forest-200\/60 {
+      border-color: rgba(52, 211, 153, 0.24) !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-forest-100 {
+      background-color: rgba(16, 185, 129, 0.22) !important;
+      color: #6EE7B7 !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-marigold-100,
+    html[data-circadian-theme="twilight"] .bg-marigold-100\/80,
+    html[data-circadian-theme="twilight"] .bg-marigold-100\/70,
+    html[data-circadian-theme="twilight"] .bg-marigold-100\/60,
+    html[data-circadian-theme="twilight"] .bg-marigold-100\/50 {
+      background-color: rgba(245, 158, 11, 0.18) !important;
+      color: #FDE68A !important;
+    }
+    html[data-circadian-theme="twilight"] .text-amber-950,
+    html[data-circadian-theme="twilight"] .text-amber-900,
+    html[data-circadian-theme="twilight"] .text-amber-800 {
+      color: #FDE68A !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-terracotta-50,
+    html[data-circadian-theme="twilight"] .bg-terracotta-100 {
+      background-color: rgba(224, 109, 83, 0.22) !important;
+      color: #FCA5A5 !important;
+    }
+    html[data-circadian-theme="twilight"] .text-terracotta-600 {
+      color: #F48C71 !important;
+    }
+    html[data-circadian-theme="twilight"] .bg-lotus-100\/70 {
+      background-color: rgba(139, 92, 246, 0.24) !important;
+      color: #DDD6FE !important;
+    }
+    html[data-circadian-theme="twilight"] .text-purple-950 {
+      color: #DDD6FE !important;
+    }
+    html[data-circadian-theme="twilight"] input[type="text"],
+    html[data-circadian-theme="twilight"] input[type="password"],
+    html[data-circadian-theme="twilight"] input[type="email"] {
+      background-color: #0F2326 !important;
+      color: #E6F4EE !important;
+      border-color: rgba(52, 211, 153, 0.32) !important;
+    }
+
+    /* Custom Botanical Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #A7F3D0, #6EE7B7);
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10B981, #047857);
+      cursor: pointer;
+      border: 3px solid #ffffff;
+      box-shadow: 0 3px 8px rgba(4, 120, 87, 0.35);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.14);
+    }
+
+    /* Navigation Tabs */
+    .tab-btn {
+      letter-spacing: 0.01em;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff !important;
+      box-shadow: 0 6px 16px -3px rgba(5, 150, 105, 0.42);
+    }
+    html[data-circadian-theme="twilight"] .tab-btn.active {
+      background: linear-gradient(135deg, #10B981 0%, #6366F1 100%);
+      box-shadow: 0 6px 16px -3px rgba(99, 102, 241, 0.45);
+    }
+    .tab-btn:not(.active):hover {
+      background: rgba(16, 185, 129, 0.16);
+    }
+
+    /* Pose Tutorial Stage */
+    .tutorial-stage {
+      background: radial-gradient(circle at 50% 22%, #FFFFFF 0%, #ECFDF5 58%, #D1FAE5 100%);
+      border: 1.5px solid #A7F3D0;
+      box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.9), 0 10px 24px rgba(6, 78, 59, 0.08);
+    }
+    html[data-circadian-theme="twilight"] .tutorial-stage {
+      background: radial-gradient(circle at 50% 22%, #19383C 0%, #102427 65%, #0B191C 100%);
+      border-color: rgba(52, 211, 153, 0.32);
+      box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.45);
+    }
+    #tutorialFigure {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .step-dot.active {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
+      border-color: #059669;
+    }
+    .step-dot.done {
+      background: #D1FAE5;
+      color: #065F46;
+      border-color: #34D399;
+    }
+
+    /* Camera Viewport */
+    #canvasContainer {
+      isolation: isolate;
+      background: #081C15;
+    }
+    #webcamVideo {
+      display: block !important;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      transform: scaleX(var(--camera-mirror, 1));
+      background: #081C15;
+    }
+    #poseCanvas {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Mascot Floating Animation */
+    @keyframes mascotFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    .mascot-float {
+      width: 72px;
+      height: 80px;
+      animation: mascotFloat 3.6s ease-in-out infinite;
+    }
+    @keyframes lotusPulse {
+      0%, 100% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.25); }
+      50% { box-shadow: 0 0 42px rgba(167, 139, 250, 0.42); }
+    }
+    .lotus-ambient-glow {
+      animation: lotusPulse 6s ease-in-out infinite;
+    }
